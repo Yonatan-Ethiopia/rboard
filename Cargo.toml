@@ -4,4 +4,8 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+arboard = "3.6.1"
+hex = "0.4.3"
 rdev = "0.5.3"
+rusqlite = {version = "0.39.0", features = ["bundled"]}
+sha2 = "0.11.0"
