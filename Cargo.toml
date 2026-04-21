@@ -5,6 +5,8 @@ edition = "2024"
 
 [dependencies]
 arboard = "3.6.1"
+eframe = "0.34.1"
+egui = "0.34.1"
 hex = "0.4.3"
 rdev = "0.5.3"
 rusqlite = {version = "0.39.0", features = ["bundled"]}
