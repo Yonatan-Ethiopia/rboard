@@ -46,8 +46,7 @@ pub fn moniter()->Result<(), Box<dyn std::error::Error>>{
     loop{
         if let Ok(content) = clipboard.get_text(){
             if content != last_content && !content.is_empty(){
-                println!("Last clipboard content!\n{}", last_content);
-                println!("New clipboard content!\n{}", content);
+                
                 let mut hasher = Sha256::new();
                 hasher.update(content.as_bytes());
                 let result = hasher.finalize();
@@ -65,6 +64,7 @@ pub fn moniter()->Result<(), Box<dyn std::error::Error>>{
                     (),
                 )?;
                 last_content = content;
+                println!("Clip db updated!");
                 
                 //println!("-------Current Top 5 Clips--------");
                 //let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5")?;

@@ -25,7 +25,7 @@ impl MyApp {
     fs::create_dir_all(&data_dir)?;
     let db_path = data_dir.join("clip_data.db");
     let conn = Connection::open(&db_path).expect("Failed to load the data");
-    println!("Connected ui at {}", db_path.display());
+    
         
         let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5").expect("SQL failed to retrive data");
         
