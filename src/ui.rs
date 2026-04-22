@@ -1,9 +1,10 @@
 use eframe::egui;
-
+use egui::{RichText, Color32, Vec2};
 use rusqlite::{Connection, Result, params};
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
+use arboard::Clipboard;
 
    
 
@@ -44,7 +45,7 @@ impl eframe::App for MyApp {
         // You no longer need to call egui::CentralPanel::default().show(...) 
         // if you want to draw directly in the provided 'ui' area.
         ui.heading("Clipboard");
-        
+        ui.spacing_mut().item_spacing = Vec2::new(15.0, 10.0);
         if self.last_update.elapsed().as_secs() >= 1 {
             self.refresh_data();
             self.last_update = std::time::Instant::now();
@@ -52,8 +53,26 @@ impl eframe::App for MyApp {
         ui.ctx().request_repaint();
         
         for text in &self.items{
-            ui.label(text);
+            ui.add_space(20.0);
+            ui.horizontal( |ui| {
+                ui.add_space(5.0);
+                ui.label(
+                    RichText::new(text)
+                    .color(Color32::from_rgb(100, 200, 255))
+                    .strong()
+                );
+                let button = egui::Button::new(
+                    RichText::new("Copy")
+                    .color(Color32::GREEN)
+                    ).fill(Color32::from_gray(40));
+                if ui.add(button).clicked() { 
+                     let mut clipboard = Clipboard::new().unwrap();
+                     clipboard.set_text(text).unwrap();
+                }
+            });
+            
         }
+
     }
 }
 
