@@ -11,6 +11,8 @@ use rusqlite::{Connection, Result, params};
 use std::hash::{Hash, Hasher};
 use sha2::{Sha256, Digest};
 use std::collections::hash_map::DefaultHasher;
+use std::fs;
+use std::path::PathBuf;
 
 fn checkClipboard(){
     
@@ -21,9 +23,13 @@ fn checkClipboard(){
     }
 }
 
-pub fn moniter()->Result<()>{
-    let conn = Connection::open("./clip_data.db")?;
-    
+
+pub fn moniter()->Result<(), Box<dyn std::error::Error>>{
+    let data_dir = home::home_dir().map( |p| p.join(".rboardD")).unwrap();
+    fs::create_dir_all(&data_dir)?;
+    let db_path = data_dir.join("clip_data.db");
+    let conn = Connection::open(&db_path)?;
+    println!("Connected backend at {}", db_path.display());
     conn.execute(
         "CREATE TABLE IF NOT EXISTS clip_history (
             id INTEGER PRIMARY KEY,
@@ -60,17 +66,17 @@ pub fn moniter()->Result<()>{
                 )?;
                 last_content = content;
                 
-                println!("-------Current Top 5 Clips--------");
-                let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5")?;
+                //println!("-------Current Top 5 Clips--------");
+                //let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5")?;
                 
-                let content_iter = stmt.query_map([], |row|{
-                    let text: String = row.get(0)?;
-                    Ok(text) 
-                })?;
-                for (i, text) in content_iter.enumerate(){
-                    println!("{}. {}", i + 1, text?);
-                }
-                println!("-----------------------------");
+                //let content_iter = stmt.query_map([], |row|{
+                    //let text: String = row.get(0)?;
+                    //Ok(text) 
+                //})?;
+                //for (i, text) in content_iter.enumerate(){
+                    //println!("{}. {}", i + 1, text?);
+                //}
+                //println!("-----------------------------");
                 
             }
         }

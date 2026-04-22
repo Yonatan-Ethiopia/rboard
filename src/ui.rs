@@ -2,6 +2,8 @@ use eframe::egui;
 
 use rusqlite::{Connection, Result, params};
 use std::error::Error;
+use std::fs;
+use std::path::PathBuf;
 
    
 
@@ -19,7 +21,11 @@ impl Default for MyApp {
 }
 impl MyApp {
     fn refresh_data(&mut self)  -> Result<(), Box<dyn std::error::Error>> {
-        let conn = Connection::open("./clip_data.db").expect("Failed to load the data");
+        let data_dir = home::home_dir().map( |p| p.join(".rboardD")).unwrap();
+    fs::create_dir_all(&data_dir)?;
+    let db_path = data_dir.join("clip_data.db");
+    let conn = Connection::open(&db_path).expect("Failed to load the data");
+    println!("Connected ui at {}", db_path.display());
         
         let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5").expect("SQL failed to retrive data");
         
