@@ -6,11 +6,9 @@ use std::fs;
 use std::path::PathBuf;
 use arboard::Clipboard;
 use std::sync::Arc;
+use sha2::{Sha256, Digest};
 
-   
 
-
-// Minimal example: define struct, implement Default and eframe::App
 struct MyApp { items: Vec<String>, last_update: std::time::Instant, }
 impl Default for MyApp {
     fn default() -> Self { let mut app = Self{
@@ -41,10 +39,8 @@ impl MyApp {
     }
 }
 impl eframe::App for MyApp {
-    // This is the new required method for drawing the UI
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        // You no longer need to call egui::CentralPanel::default().show(...) 
-        // if you want to draw directly in the provided 'ui' area.
+        
         ui.add_space(5.0);
         ui.heading(" Clipboard");
         ui.add_space(5.0);
@@ -57,11 +53,7 @@ impl eframe::App for MyApp {
         
         for text in &self.items{
             
-            //ui.scope(|ui| {
-        //ui.style_mut().visuals.widgets.noninteractive.bg_stroke = 
-            //egui::Stroke::new(1.0, Color32::TRANSPARENT); // Custom border color
-        //ui.separator();
-    //});
+            
     
             ui.add_space(5.0);
             ui.horizontal( |ui| {
@@ -82,12 +74,12 @@ impl eframe::App for MyApp {
                     RichText::new("Copy").size(11.0).strong()
                     .color(Color32::from_gray(140))
                     );
-                // This pushes the button to the far right of the row
+                
 ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
-    ui.add_space(5.0); // Small margin from the right edge
+    ui.add_space(5.0); 
     
     ui.scope(|ui| {
-        // STYLE OVERRIDES
+       
         ui.style_mut().visuals.widgets.inactive.weak_bg_fill = egui::Color32::from_gray(40);
         ui.style_mut().visuals.widgets.inactive.bg_stroke = egui::Stroke::NONE;
         
@@ -110,7 +102,6 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             clipboard.set_text(text).unwrap();
         }
         ui.add_space(2.0);
-        
        
         let del_btn = egui::Button::new(
             RichText::new("Delete") // Or "Clear"
@@ -118,7 +109,14 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
                 .color(egui::Color32::from_rgb(200, 100, 100)) // Reddish tint
         );
         if ui.add(del_btn).clicked() {
-            // Delete logic...
+            let data_dir = home::home_dir().map( |p| p.join(".rboardD")).unwrap();
+    fs::create_dir_all(&data_dir).unwrap();
+    let db_path = data_dir.join("clip_data.db");
+    let conn = Connection::open(&db_path).unwrap();
+            let content_hash = hex::encode(text);
+            conn.execute( "DELETE  FROM clip_history WHERE content = (?1)", params![text]).unwrap();
+            println!("Deleted {}",content_hash);
+            
         }
     });
 });
@@ -128,32 +126,19 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
             ui.vertical_centered(|ui| {
             
     let (rect, _) = ui.allocate_exact_size(
-        egui::vec2(ui.available_width() * 0.8, 1.0), // 80% width, 2px height
+        egui::vec2(ui.available_width() * 0.8, 1.0), 
         egui::Sense::hover()
     );
     
     ui.painter().rect_filled(
         rect, 
-        1.0, // This is your border radius (rounding)
+        1.0, 
         egui::Color32::from_gray(60)
     );
 });
             
         }
-        //ui.vertical_centered(|ui| {
-            
-    //let (rect, _) = ui.allocate_exact_size(
-        //egui::vec2(ui.available_width() * 0.8, 1.0), // 80% width, 2px height
-        //egui::Sense::hover()
-    //);
-    
-    //ui.painter().rect_filled(
-        //rect, 
-        //1.0, // This is your border radius (rounding)
-        //egui::Color32::from_gray(60)
-    //);
-//});
-
+        
 
     }
 }
@@ -161,10 +146,10 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 pub fn draw()  -> eframe::Result {
     let options = eframe::NativeOptions {
     viewport: egui::ViewportBuilder::default()
-        .with_decorations(true)     // Removes the title bar/close buttons
-        .with_always_on_top()        // Keeps it above other windows
+        .with_decorations(true)     
+        .with_always_on_top()        
         .with_inner_size([300.0, 400.0])
-        .with_transparent(false),     // If you want a rounded/transparent look
+        .with_transparent(false),    
     ..Default::default()
 };
     eframe::run_native("App", options, 
