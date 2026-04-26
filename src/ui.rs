@@ -7,17 +7,25 @@ use std::path::PathBuf;
 use arboard::Clipboard;
 use std::sync::Arc;
 use sha2::{Sha256, Digest};
+use std::sync::mpsc::{channel, Receiver};
+use crate::tray::{TrayMessage, self};
 
 
-struct MyApp { items: Vec<String>, last_update: std::time::Instant, }
-impl Default for MyApp {
-    fn default() -> Self { let mut app = Self{
-        items: Vec::new(),
-        last_update: std::time::Instant::now(), 
+struct MyApp { items: Vec<String>, 
+				last_update: std::time::Instant,
+				rx: Receiver<TrayMessage>,
+				visible: bool, }
+impl MyApp {
+    pub fn new(rx: std::sync::mpsc::Receiver<crate::tray::TrayMessage>) -> Self {
+        let mut app = Self {
+            rx,              // Pass the receiver here
+            visible: true,   // App starts visible
+            items: Vec::new(),
+            last_update: std::time::Instant::now(),
         };
-        app.refresh_data();
+        app.refresh_data(); // Run your initial DB fetch
         app
-        }
+    }
 }
 impl MyApp {
     fn refresh_data(&mut self)  -> Result<(), Box<dyn std::error::Error>> {
@@ -39,7 +47,34 @@ impl MyApp {
     }
 }
 impl eframe::App for MyApp {
+    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+        while gtk::events_pending() {
+            gtk::main_iteration();
+        }
+        // 1. Check for messages from the Tray thread
+        if let Ok(msg) = self.rx.try_recv() {
+            match msg {
+                TrayMessage::ShowWindow => self.visible = true,
+                TrayMessage::Quit => std::process::exit(0),
+            }
+        }
+
+        // 2. Apply visibility
+        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
+
+        // 3. Handle the "X" button click
+        if ctx.input(|i| i.viewport().close_requested()) {
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose); // Don't quit
+            self.visible = false; // Just hide
+        }
+
+       
+    }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
+        
+        
+        
+        
         
         ui.add_space(5.0);
         ui.heading(" Clipboard");
@@ -144,6 +179,9 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 }
 
 pub fn draw()  -> eframe::Result {
+	let (tx, rx) = channel();
+	let _tray = tray::create_tray();
+	tray::handle_tray_events(tx);
     let options = eframe::NativeOptions {
     viewport: egui::ViewportBuilder::default()
         .with_decorations(true)     
@@ -152,8 +190,17 @@ pub fn draw()  -> eframe::Result {
         .with_transparent(false),    
     ..Default::default()
 };
-    eframe::run_native("App", options, 
-        Box::new(|cc|{ set_up_font(&cc.egui_ctx); Ok(Box::new(MyApp::default()))}));
+    eframe::run_native(
+    "Rboard",
+    options,
+    Box::new(|cc| {
+        
+        set_up_font(&cc.egui_ctx);
+
+        
+        Ok(Box::new(MyApp::new(rx)))
+    }),
+).unwrap();
         
     loop {          
         std::thread::sleep(std::time::Duration::from_secs(1));
