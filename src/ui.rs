@@ -18,12 +18,12 @@ struct MyApp { items: Vec<String>,
 impl MyApp {
     pub fn new(rx: std::sync::mpsc::Receiver<crate::tray::TrayMessage>) -> Self {
         let mut app = Self {
-            rx,              // Pass the receiver here
-            visible: true,   // App starts visible
+            rx,              
+            visible: true,  
             items: Vec::new(),
             last_update: std::time::Instant::now(),
         };
-        app.refresh_data(); // Run your initial DB fetch
+        app.refresh_data(); 
         app
     }
 }
@@ -34,7 +34,6 @@ impl MyApp {
     let db_path = data_dir.join("clip_data.db");
     let conn = Connection::open(&db_path).expect("Failed to load the data");
     
-        
         let mut stmt = conn.prepare("SELECT content FROM clip_history ORDER BY timestamps DESC LIMIT 5").expect("SQL failed to retrive data");
         
         let content_iter = stmt.query_map([], |row|{
@@ -51,7 +50,7 @@ impl eframe::App for MyApp {
         while gtk::events_pending() {
             gtk::main_iteration();
         }
-        // 1. Check for messages from the Tray thread
+
         if let Ok(msg) = self.rx.try_recv() {
             match msg {
                 TrayMessage::ShowWindow => self.visible = true,
@@ -59,23 +58,15 @@ impl eframe::App for MyApp {
             }
         }
 
-        // 2. Apply visibility
         ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
-
-        // 3. Handle the "X" button click
+        
         if ctx.input(|i| i.viewport().close_requested()) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose); // Don't quit
-            self.visible = false; // Just hide
+            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
+            self.visible = false; 
         }
 
-       
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
-        
-        
-        
-        
-        
         ui.add_space(5.0);
         ui.heading(" Clipboard");
         ui.add_space(5.0);
@@ -87,9 +78,6 @@ impl eframe::App for MyApp {
         ui.ctx().request_repaint();
         
         for text in &self.items{
-            
-            
-    
             ui.add_space(5.0);
             ui.horizontal( |ui| {
                 ui.add_space(5.0);
@@ -139,23 +127,22 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
         ui.add_space(2.0);
        
         let del_btn = egui::Button::new(
-            RichText::new("Delete") // Or "Clear"
+            RichText::new("Delete") 
                 .size(11.0)
-                .color(egui::Color32::from_rgb(200, 100, 100)) // Reddish tint
+                .color(egui::Color32::from_rgb(200, 100, 100)) 
         );
         if ui.add(del_btn).clicked() {
             let data_dir = home::home_dir().map( |p| p.join(".rboardD")).unwrap();
     fs::create_dir_all(&data_dir).unwrap();
     let db_path = data_dir.join("clip_data.db");
     let conn = Connection::open(&db_path).unwrap();
-            let content_hash = hex::encode(text);
+            
             conn.execute( "DELETE  FROM clip_history WHERE content = (?1)", params![text]).unwrap();
-            println!("Deleted {}",content_hash);
+            println!("Content deleted.");
             
         }
     });
 });
-
                 
             });
             ui.vertical_centered(|ui| {
@@ -173,7 +160,6 @@ ui.with_layout(egui::Layout::right_to_left(egui::Align::Center), |ui| {
 });
             
         }
-        
 
     }
 }
@@ -194,9 +180,7 @@ pub fn draw()  -> eframe::Result {
     "Rboard",
     options,
     Box::new(|cc| {
-        
         set_up_font(&cc.egui_ctx);
-
         
         Ok(Box::new(MyApp::new(rx)))
     }),
@@ -220,21 +204,8 @@ pub fn set_up_font(ctx: &egui::Context){
         .insert(0, "jet".to_owned());
     ctx.set_fonts(fonts);
 }
-fn main() //-> eframe::Result 
+fn main() 
 {
-    //let options = eframe::NativeOptions {
-    //viewport: egui::ViewportBuilder::default()
-        //.with_decorations(true)     // Removes the title bar/close buttons
-        //.with_always_on_top()        // Keeps it above other windows
-        //.with_inner_size([300.0, 400.0])
-        //.with_transparent(false),     // If you want a rounded/transparent look
-    //..Default::default()
-//};
-    //eframe::run_native("App", options, 
-        //Box::new(|_| Ok(Box::new(MyApp::default()))));
-        
-    //loop {
-        //std::thread::sleep(std::time::Duration::from_secs(1));
-    //}
+
 }
 
