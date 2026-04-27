@@ -58,12 +58,14 @@ impl eframe::App for MyApp {
             }
         }
 
-        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
+        
         
         if ctx.input(|i| i.viewport().close_requested()) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            self.visible = false; 
+            self.visible = false;
+			ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
         }
+		ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
 
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
