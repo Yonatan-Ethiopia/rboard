@@ -53,7 +53,12 @@ impl eframe::App for MyApp {
 
         if let Ok(msg) = self.rx.try_recv() {
             match msg {
-                TrayMessage::ShowWindow => self.visible = true,
+                TrayMessage::ShowWindow => {
+                    self.visible = true; 
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
+                    },
                 TrayMessage::Quit => std::process::exit(0),
             }
         }
@@ -66,7 +71,7 @@ impl eframe::App for MyApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
 			ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             
-            prinln!("the window is hidden, is it visible: {}", self.visible);
+            println!("the window is hidden, is it visible: {}", self.visible);
         }
 		ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
 
