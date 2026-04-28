@@ -41,7 +41,7 @@ tar -xf rboard*.tar.gz
 
 #Change to the newly unarchived directoy.
 
-cd ./rboard*
+cd ./rboard-*x64
 
 #Make the install script executable.
 
