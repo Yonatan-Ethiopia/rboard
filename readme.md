@@ -14,7 +14,7 @@ Its a utility built in **Rust** . It stays out of your way in the system tray wh
 ---
 ### Live usage
 ---
-![Alt Text](show_asset/rboardscrn.mp4)
+![Alt Text](show_asset/rboardvid.gif)
 ---
 
 **System tray integration**
