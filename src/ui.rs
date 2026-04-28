@@ -54,9 +54,9 @@ impl eframe::App for MyApp {
         if let Ok(msg) = self.rx.try_recv() {
             match msg {
                 TrayMessage::ShowWindow => {
-                    self.visible = true; 
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+                    self.visible = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
+                    ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
                     },
                 TrayMessage::Quit => std::process::exit(0),
@@ -69,7 +69,7 @@ impl eframe::App for MyApp {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.visible = false;
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
-			ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
             
             println!("the window is hidden, is it visible: {}", self.visible);
         }
@@ -180,7 +180,8 @@ pub fn draw()  -> eframe::Result {
 	tray::handle_tray_events(tx);
     let options = eframe::NativeOptions {
     viewport: egui::ViewportBuilder::default()
-        .with_decorations(true)     
+        .with_decorations(true)
+        .with_window_type(egui::WindowType::Utility)     
         .with_always_on_top()        
         .with_inner_size([300.0, 400.0])
         .with_transparent(false),    
