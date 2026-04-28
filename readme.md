@@ -27,7 +27,7 @@ Its a utility built in **Rust** . It stays out of your way in the system tray wh
 
 ### Option 1(Recommended)   
 ---
-**1. Download the latest `rboard-linux-x64.tar.gz` from the release page.**
+**1. Download the latest `rboard-linux-x64.tar.gz` from the [release](https://github.com/Yonatan-Ethiopia/rboard/releases/download/v0.1.0/rboard-linux-x64.tar.gz) page.**
 
 **2. Run the following commands in order :**  
 ```
