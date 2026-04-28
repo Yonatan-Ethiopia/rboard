@@ -57,6 +57,7 @@ impl eframe::App for MyApp {
                     self.visible = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
+                    ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(egui::WindowLevel::AlwaysOnTop));
                     ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
                     },
                 TrayMessage::Quit => std::process::exit(0),
@@ -70,10 +71,10 @@ impl eframe::App for MyApp {
             self.visible = false;
             ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
             ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
-            
+            ctx.request_repaint();
             println!("the window is hidden, is it visible: {}", self.visible);
         }
-		ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
+		
 
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
