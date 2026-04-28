@@ -63,7 +63,10 @@ impl eframe::App for MyApp {
         if ctx.input(|i| i.viewport().close_requested()) {
             ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
             self.visible = false;
+            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
 			ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+            
+            prinln!("the window is hidden, is it visible: {}", self.visible);
         }
 		ctx.send_viewport_cmd(egui::ViewportCommand::Visible(self.visible));
 
