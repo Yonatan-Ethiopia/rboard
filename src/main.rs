@@ -1,11 +1,9 @@
 mod backend;
-mod ui;
 mod tray;
+mod ui;
+use gtk::glib;
 use std::ops::ControlFlow;
 use std::thread::spawn;
-use gtk::glib;
-
-
 
 fn main() {
     gtk::init().expect("Failed to init GTK");
