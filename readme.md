@@ -6,7 +6,8 @@ Its a utility built in **Rust** . It stays out of your way in the system tray wh
 ---
 ## Features  
 
-*  **Minimalist UI :** Built with `egui` for a "no frills", high performance experience.    
+*  **Minimalist UI :** Built with `egui` for a "no frills", high performance experience.
+*  **Automatic Capture :** Real-time clipboard monitoring. Just copy text anywhere, and **Rboard** handles the rest. No manual pasting required.   
 *  **Persistence :** Uses SQLite to ensure your clipboard history survives reboots.  
 * **Tray Integration :** Quick access via system tray (supports Ayatana/AppIndicator).  
 * **Lightweight :** Minimal idle RAM usage ( approx 1.5%).  
