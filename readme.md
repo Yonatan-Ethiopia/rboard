@@ -20,7 +20,7 @@ Its a utility built in **Rust** . It stays out of your way in the system tray wh
 
 **System tray integration**
 
-~![Alt Text](show_asset/screen2.png)
+![Alt Text](show_asset/screen2.png)
 
 --- 
 ---
