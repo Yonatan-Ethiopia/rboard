@@ -2,13 +2,13 @@ use crate::tray::{self, TrayMessage};
 use arboard::Clipboard;
 use eframe::egui;
 use egui::{Color32, RichText, Vec2};
-use rusqlite::{Connection, Result, params};
+use rusqlite::{params, Connection, Result};
 use sha2::{Digest, Sha256};
 use std::error::Error;
 use std::fs;
 use std::path::PathBuf;
+use std::sync::mpsc::{channel, Receiver};
 use std::sync::Arc;
-use std::sync::mpsc::{Receiver, channel};
 
 struct MyApp {
     items: Vec<String>,
@@ -49,33 +49,164 @@ impl MyApp {
     }
 }
 impl eframe::App for MyApp {
+    fn clear_color(&self, _visuals: &egui::Visuals) -> [f32; 4] {
+        egui::Rgba::TRANSPARENT.to_array()
+    }
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
         while gtk::events_pending() {
             gtk::main_iteration();
         }
+
+        egui::CentralPanel::default()
+            .frame(egui::Frame::none().fill(egui::Color32::TRANSPARENT))
+            .show(ctx, |ui| {
+                let app_container = egui::Frame::none()
+                    .fill(egui::Color32::from_rgb(25, 25, 35))
+                    .corner_radius(12)
+                    .inner_margin(egui::Margin::same(0));
+
+                app_container.show(ui, |ui| {
+                    ui.expand_to_include_rect(ui.max_rect());
+
+                    let bar_height = 40.0;
+                    let full_width = ui.max_rect().width();
+
+                    let (bar_rect, _) = ui.allocate_exact_size(
+                        egui::vec2(full_width, bar_height),
+                        egui::Sense::hover(),
+                    );
+
+                    let rounding = egui::CornerRadius {
+                        nw: 12,
+                        ne: 12,
+                        sw: 0,
+                        se: 0,
+                    };
+                    ui.painter().rect_filled(
+                        bar_rect,
+                        rounding,
+                        egui::Color32::from_rgb(30, 30, 40),
+                    );
+                    ui.visuals_mut().widgets.hovered.bg_stroke = egui::Stroke::NONE;
+                    ui.visuals_mut().widgets.active.bg_stroke = egui::Stroke::NONE;
+                    ui.visuals_mut().widgets.hovered.expansion = 0.0;
+                    ui.visuals_mut().widgets.active.expansion = 0.0;
+
+                    let drag_response =
+                        ui.interact(bar_rect, ui.id().with("drag_bar"), egui::Sense::click());
+                    if drag_response.is_pointer_button_down_on() {
+                        ui.ctx().send_viewport_cmd(egui::ViewportCommand::StartDrag);
+                    }
+                    let mut child_ui = ui.child_ui(
+                        bar_rect,
+                        egui::Layout::right_to_left(egui::Align::Center),
+                        None,
+                    );
+
+                    child_ui.add_space(4.0);
+                    child_ui.spacing_mut().item_spacing.x = 9.0;
+
+                    let button_size = egui::vec2(18.0, 18.0);
+                    let make_custom_btn = |text: &str, fill_color: egui::Color32| {
+                        egui::Button::new(text)
+                            .min_size(button_size)
+                            .rounding(9.0)
+                            .fill(fill_color)
+                            .stroke(egui::Stroke::new(1.0, egui::Color32::from_rgb(70, 70, 85)))
+                    };
+
+                    let paint_circle_btn =
+                        |ui: &mut egui::Ui, fill: egui::Color32| -> egui::Response {
+                            let (rect, response) =
+                                ui.allocate_exact_size(button_size, egui::Sense::click());
+                            let center = rect.center();
+                            let radius = 9.0;
+                            // Background circle
+                            ui.painter().circle_filled(center, radius, fill);
+                            // Border
+                            ui.painter().circle_stroke(
+                                center,
+                                radius,
+                                egui::Stroke::new(1.0, egui::Color32::from_rgb(70, 70, 85)),
+                            );
+                            response
+                        };
+
+                    let draw_minimize = |ui: &mut egui::Ui| {
+                        let (rect, response) =
+                            ui.allocate_exact_size(button_size, egui::Sense::click());
+                        let center = rect.center();
+                        ui.painter().circle_filled(
+                            center,
+                            9.0,
+                            egui::Color32::from_rgb(45, 45, 55),
+                        );
+                        ui.painter().circle_stroke(
+                            center,
+                            9.0,
+                            egui::Stroke::new(1.0, egui::Color32::from_rgb(70, 70, 85)),
+                        );
+                        ui.painter().line_segment(
+                            [center - egui::vec2(4.0, 0.0), center + egui::vec2(4.0, 0.0)],
+                            egui::Stroke::new(1.5, egui::Color32::from_gray(180)),
+                        );
+                        response
+                    };
+
+                    let draw_maximize = |ui: &mut egui::Ui| {
+                        let (rect, response) =
+                            ui.allocate_exact_size(button_size, egui::Sense::click());
+                        let center = rect.center();
+                        ui.painter().circle_filled(
+                            center,
+                            9.0,
+                            egui::Color32::from_rgb(45, 45, 55),
+                        );
+                        ui.painter().circle_stroke(
+                            center,
+                            9.0,
+                            egui::Stroke::new(1.0, egui::Color32::from_rgb(70, 70, 85)),
+                        );
+                        let sq = egui::Rect::from_center_size(center, egui::vec2(8.0, 8.0));
+                        ui.painter().rect_stroke(
+                            sq,
+                            1.0,
+                            egui::Stroke::new(1.5, egui::Color32::from_gray(180)),
+                            egui::StrokeKind::Middle,
+                        );
+                        response
+                    };
+
+                    let close_btn = make_custom_btn("❌", egui::Color32::from_rgb(180, 50, 50));
+                    if child_ui.add(close_btn).clicked() {
+                        self.visible = false;
+                        ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
+                    }
+
+                    if draw_maximize(&mut child_ui).clicked() {
+                        let is_maximized =
+                            child_ui.input(|i| i.viewport().maximized.unwrap_or(false));
+                        child_ui
+                            .ctx()
+                            .send_viewport_cmd(egui::ViewportCommand::Maximized(!is_maximized));
+                    }
+
+                    if draw_minimize(&mut child_ui).clicked() {
+                        child_ui
+                            .ctx()
+                            .send_viewport_cmd(egui::ViewportCommand::Minimized(true));
+                    }
+                });
+            });
 
         if let Ok(msg) = self.rx.try_recv() {
             match msg {
                 TrayMessage::ShowWindow => {
                     self.visible = true;
                     ctx.send_viewport_cmd(egui::ViewportCommand::Visible(true));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(false));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::WindowLevel(
-                        egui::WindowLevel::AlwaysOnTop,
-                    ));
-                    ctx.send_viewport_cmd(egui::ViewportCommand::Focus);
                 }
                 TrayMessage::Quit => std::process::exit(0),
             }
-        }
-
-        if ctx.input(|i| i.viewport().close_requested()) {
-            ctx.send_viewport_cmd(egui::ViewportCommand::CancelClose);
-            self.visible = false;
-            ctx.send_viewport_cmd(egui::ViewportCommand::Minimized(true));
-            ctx.send_viewport_cmd(egui::ViewportCommand::Visible(false));
-            ctx.request_repaint();
-            println!("the window is hidden, is it visible: {}", self.visible);
         }
     }
     fn ui(&mut self, ui: &mut egui::Ui, _frame: &mut eframe::Frame) {
@@ -191,11 +322,12 @@ pub fn draw() -> eframe::Result {
     };
     let options = eframe::NativeOptions {
         viewport: egui::ViewportBuilder::default()
-            .with_decorations(true)
+            .with_decorations(false)
+            .with_transparent(true)
+            .with_resizable(true)
             .with_always_on_top()
             .with_icon(std::sync::Arc::new(icon))
-            .with_inner_size([300.0, 400.0])
-            .with_transparent(false),
+            .with_inner_size([300.0, 400.0]),
         ..Default::default()
     };
     eframe::run_native(
