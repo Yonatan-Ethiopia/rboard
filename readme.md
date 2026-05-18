@@ -78,8 +78,17 @@ cargo build --release
 
 ```
 
+## Changelogs
+
 ---
-## ⚠️ Known Issues (v0.1.0)
+
+### v0.1.1
+-**Fixed:** App now hides completely on wayland/GNOME when clicking the **X(close button)** instead of minimizing to the taskbar.  
+
+### v0.1.0  
+- **Initial release**  
+
+####⚠️ Known Issues (v0.1.0)
 
 - **Wayland/GNOME Behavior :** On modern Ubuntu versions using Wayland, clicking the **X(Close)** button will only minimize the app to the taskbar/tray instead of hiding it completely. To fully close the app, use the **Tray Icon** menu. (The app needs to be running to capture copy actions).
 - **Mesa/EGL Logs :** You may see "Failed to choose pdev" and related messages if you are running it from the terminal. These are non-critical driver fallback messages and do not affect the app's perfomance.
